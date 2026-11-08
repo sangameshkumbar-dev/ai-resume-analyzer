@@ -1,0 +1,29 @@
+Senior Full Stack Engineer (Python & React)
+Location: Remote / Hybrid
+Department: Core Platform Engineering
+
+About the Role:
+We are seeking an experienced Senior Full Stack Engineer with 5+ years of software engineering experience to architect and scale our customer-facing web platforms and high-throughput microservices.
+
+Key Responsibilities:
+• Architect, build, and maintain scalable full-stack web applications and microservices.
+• Develop responsive, performant user interfaces using React, TypeScript, and modern CSS.
+• Design robust RESTful APIs and asynchronous background processing pipelines using Python, FastAPI, and PostgreSQL.
+• Deploy and maintain cloud infrastructure on AWS using Docker, Kubernetes, and GitHub Actions CI/CD pipelines.
+• Collaborate with product managers, UX designers, and senior engineers to deliver high-impact features.
+• Champion clean code, TDD unit testing, code reviews, and system reliability best practices.
+
+Required Qualifications & Skills:
+• Minimum 5+ years of professional software engineering experience.
+• Strong hands-on proficiency in Python and modern frameworks (FastAPI or Django).
+• Extensive experience with React, TypeScript, and state management.
+• Deep relational database expertise with PostgreSQL, schema design, and query optimization.
+• Solid background in Cloud & DevOps: AWS (ECS, S3, RDS), Docker, and CI/CD pipelines.
+• Bachelor's Degree in Computer Science, Software Engineering, or equivalent practical experience.
+
+Preferred Qualifications (Nice to Have):
+• Experience with Redis caching and asynchronous queues (Celery or Kafka).
+• Knowledge of Kubernetes, Terraform, and Infrastructure as Code.
+• Hands-on familiarity with GraphQL and Next.js.
+• Experience with automated testing tools like PyTest and Jest.
+

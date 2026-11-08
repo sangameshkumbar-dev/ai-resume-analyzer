@@ -1,0 +1,28 @@
+Machine Learning Engineer (NLP & Generative AI)
+Location: San Francisco, CA / Hybrid
+Department: Applied AI Labs
+
+About the Role:
+We are looking for an innovative Machine Learning Engineer with 3+ years of industry experience to design, train, and deploy state-of-the-art NLP models, embedding pipelines, and LLM-powered applications.
+
+Key Responsibilities:
+• Build and fine-tune large language models (LLMs) and transformer architectures for enterprise NLP tasks.
+• Design and scale Retrieval-Augmented Generation (RAG) pipelines using vector databases such as Pinecone, ChromaDB, or Milvus.
+• Develop robust data preprocessing and feature engineering pipelines using Python, Pandas, and Apache Spark.
+• Package and deploy ML inference endpoints as low-latency microservices with FastAPI and Docker on AWS or GCP.
+• Monitor model performance, drift, and latency using Prometheus and Grafana.
+
+Required Qualifications & Skills:
+• Minimum 3+ years of professional hands-on machine learning experience.
+• Advanced proficiency in Python and deep learning frameworks: PyTorch or TensorFlow.
+• Practical expertise in NLP, Transformers, Hugging Face, and embeddings.
+• Experience building RESTful model serving APIs using FastAPI or Flask.
+• Solid background with Docker, Linux, and Cloud (AWS or GCP).
+• Master's Degree or Bachelor's Degree in Computer Science, Data Science, or AI.
+
+Preferred Qualifications (Nice to Have):
+• Experience with Vector DBs (ChromaDB, Pinecone, FAISS) and RAG architectures.
+• Hands-on with LangChain or LlamaIndex.
+• Knowledge of Kubernetes (KubeFlow, EKS) and CI/CD pipelines for ML (MLOps).
+• Familiarity with Scikit-Learn, Spark, and Databricks.
+

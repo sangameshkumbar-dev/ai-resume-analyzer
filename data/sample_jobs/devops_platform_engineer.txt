@@ -1,0 +1,28 @@
+DevOps & Cloud Platform Engineer
+Location: Austin, TX / Remote
+Department: Infrastructure & SRE
+
+About the Role:
+We are hiring a Cloud Platform Engineer with 4+ years of experience to manage multi-region cloud infrastructure, automate deployment pipelines, and maintain high system availability.
+
+Key Responsibilities:
+• Provision and maintain infrastructure as code across AWS and Azure using Terraform and Ansible.
+• Manage Kubernetes clusters (EKS), Helm charts, and container orchestration.
+• Design, optimize, and maintain CI/CD pipelines using GitHub Actions and GitLab CI.
+• Implement observability, logging, and alerting systems using Prometheus, Grafana, and ELK Stack.
+• Ensure cloud security posture, compliance, IAM policies, and disaster recovery readiness.
+
+Required Qualifications & Skills:
+• 4+ years of professional DevOps / SRE experience.
+• Strong command of Cloud platforms: AWS or Azure.
+• Deep expertise in Docker, Kubernetes, and Helm.
+• Advanced Terraform and Infrastructure as Code (IaC) skills.
+• Scripting proficiency in Bash, Python, or Go.
+• CI/CD pipeline automation (GitHub Actions, Jenkins, or GitLab CI).
+• Bachelor's Degree in Computer Science, Information Technology, or relevant experience.
+
+Preferred Qualifications (Nice to Have):
+• CKA (Certified Kubernetes Administrator) or AWS Certified Solutions Architect.
+• Experience with ArgoCD, Service Mesh (Istio), and Linux kernel tuning.
+• Familiarity with PostgreSQL, Redis clustering, and security scanners.
+

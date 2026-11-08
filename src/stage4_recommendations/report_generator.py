@@ -1,0 +1,97 @@
+"""
+Audit Report Generator.
+Formats analysis results, score breakdowns, and recommendations into clean Markdown reports.
+"""
+from typing import Dict, Any
+from src.stage2_extraction.resume_parser import CandidateProfile
+from src.stage3_matching.jd_parser import JobRequirements
+from src.stage3_matching.scoring_engine import MatchScoreBreakdown
+
+
+class ReportGenerator:
+    """Generates comprehensive Markdown reports for candidate export."""
+
+    @staticmethod
+    def generate_markdown_report(
+        profile: CandidateProfile,
+        jd: JobRequirements,
+        score: MatchScoreBreakdown,
+        recommendations: Dict[str, Any]
+    ) -> str:
+        """Generate complete exportable markdown report."""
+        report = []
+        report.append(f"# 🎯 AI Resume & Job Match Audit Report")
+        report.append(f"**Target Position:** {jd.title}")
+        report.append(f"**Candidate:** {profile.name}")
+        report.append(f"**Overall Match Score:** **{score.overall_score}%** — *{score.tier}*\n")
+        report.append("---")
+
+        # 1. Executive Summary
+        report.append("## 📌 1. Match Score Breakdown")
+        report.append("| Dimension | Score | Weight | Contribution |")
+        report.append("|---|---|---|---|")
+        report.append(f"| **Technical Skills Match** | {score.skills_score}% | {int(score.weights['skill_match']*100)}% | +{score.weighted_contributions['skills']} pts |")
+        report.append(f"| **Semantic / Domain Similarity** | {score.semantic_score}% | {int(score.weights['semantic_similarity']*100)}% | +{score.weighted_contributions['semantic']} pts |")
+        report.append(f"| **Experience Alignment** | {score.experience_score}% | {int(score.weights['experience_alignment']*100)}% | +{score.weighted_contributions['experience']} pts |")
+        report.append(f"| **Education Alignment** | {score.education_score}% | {int(score.weights['education_alignment']*100)}% | +{score.weighted_contributions['education']} pts |")
+        report.append(f"| **TOTAL SCORE** | **{score.overall_score}%** | 100% | **{score.overall_score} pts** |\n")
+
+        report.append("### Score Explanation:")
+        for exp in score.explanations:
+            report.append(f"- {exp}")
+        report.append("\n---")
+
+        # 2. Skill Gap Analysis
+        report.append("## 🔍 2. Skill Alignment & Gap Analysis")
+        report.append(f"**Matched Skills ({len(score.skill_report.all_matched)}):**")
+        if score.skill_report.all_matched:
+            report.append(", ".join([f"`{s}`" for s in score.skill_report.all_matched]))
+        else:
+            report.append("None identified")
+
+        report.append(f"\n**Missing Required Skills ({len(score.skill_report.missing_required_skills)}):**")
+        if score.skill_report.missing_required_skills:
+            report.append(", ".join([f"`{s}`" for s in score.skill_report.missing_required_skills]))
+        else:
+            report.append("None! All required skills matched.")
+
+        if score.skill_report.missing_preferred_skills:
+            report.append(f"\n**Missing Preferred Skills ({len(score.skill_report.missing_preferred_skills)}):**")
+            report.append(", ".join([f"`{s}`" for s in score.skill_report.missing_preferred_skills]))
+
+        report.append("\n---")
+
+        # 3. Actionable Recommendations
+        report.append("## 💡 3. Personalized Improvement Recommendations")
+        report.append("### A. High-Priority Missing Skill Integration")
+        for rec in recommendations.get("missing_skills_strategy", []):
+            report.append(f"**{rec['skill']}** ({rec['importance']})")
+            report.append(f"- *Advice:* {rec['actionable_advice']}")
+            report.append(f"- *Sample Bullet:* `{rec['example_bullet']}`\n")
+
+        report.append("### B. Google XYZ / STAR Bullet Point Enhancements")
+        for b in recommendations.get("bullet_enhancements", []):
+            report.append(f"**Original:** *\"{b['original']}\"*")
+            report.append(f"**Enhanced:** **{b['improved']}**")
+            report.append(f"*Why:* {b['critique']}\n")
+
+        # 4. Tailored Summary
+        report.append("### C. Tailored Executive Pitch")
+        report.append(f"> \"{recommendations.get('tailored_summary', '')}\"\n")
+
+        # 5. ATS Compliance
+        ats = recommendations.get("ats_audit", {})
+        report.append("## 📋 4. ATS & Readability Audit")
+        report.append(f"- **Estimated Word Count:** {ats.get('word_count', 0)}")
+        report.append(f"- **Strong Action Verbs Found:** {ats.get('action_verb_count', 0)}")
+        report.append(f"- **Quantifiable Metrics Found:** {ats.get('metrics_detected_count', 0)}")
+        report.append(f"- **ATS Health Score:** {ats.get('ats_compatibility_score', 0)}/100")
+        report.append("### Checks & Advice:")
+        for check in ats.get("checks", []):
+            report.append(f"- {check}")
+
+        report.append("\n---")
+        report.append("*Generated by AI Resume Analyzer & Job Matcher (Hybrid NLP, Local Embeddings & LLM)*")
+
+        return "\n".join(report)
+
