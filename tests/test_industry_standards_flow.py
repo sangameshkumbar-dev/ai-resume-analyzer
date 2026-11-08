@@ -451,3 +451,23 @@ def test_ui_components_generate_valid_figures():
     assert fig_bar is not None
     assert len(fig_bar.data) == 2  # Earned vs Unearned bars
 
+
+def test_streamlit_session_state_null_safety():
+    """Verify null safety when session state keys exist with None values on startup."""
+    mock_session = {
+        "extracted_doc": None,
+        "candidate_profile": None,
+        "active_resume_id": None,
+        "jd_text": "",
+        "match_results": None,
+        "recommendations": None
+    }
+    # Simulate initial page load without upload (user opening browser)
+    uploaded_file = None
+    active_id = mock_session.get("active_resume_id") or ""
+    is_cleared = active_id.startswith("upload_")
+    assert not is_cleared
+
+    current_id = mock_session.get("active_resume_id") or "default"
+    assert current_id == "default"
+

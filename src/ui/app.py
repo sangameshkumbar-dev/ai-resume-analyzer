@@ -246,7 +246,7 @@ with tab1:
             # Invalidate downstream match results from the previous resume
             st.session_state.match_results = None
             st.session_state.recommendations = None
-    elif st.session_state.get("active_resume_id", "").startswith("upload_"):
+    elif (st.session_state.get("active_resume_id") or "").startswith("upload_"):
         # User cleared the uploaded file (clicked the 'x' in the uploader)
         st.session_state.extracted_doc = None
         st.session_state.candidate_profile = None
@@ -280,7 +280,7 @@ with tab1:
             
             # Interactive editable text verification with dynamic key based on active resume ID
             # This ensures that uploading a new resume replaces the text area contents immediately
-            current_id = st.session_state.get("active_resume_id", "default")
+            current_id = st.session_state.get("active_resume_id") or "default"
             text_area_key = f"verified_resume_text_{current_id}"
 
             verified_text = st.text_area(
