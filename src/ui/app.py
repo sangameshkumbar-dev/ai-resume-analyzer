@@ -366,14 +366,20 @@ with tab2:
             if profile.work_experience:
                 for work in profile.work_experience:
                     with st.container():
-                        st.markdown(f"**{work['title']}**")
-                        comp = work.get("company")
-                        if comp and comp != "Company / Organization":
-                            st.markdown(f"🏢 **Organization / Company:** {comp}")
-                        elif comp:
-                            st.markdown(f"🏢 **Organization / Company:** *{comp}*")
+                        # Role title
+                        title = work.get("title", "")
+                        if title and title != "Software Professional / Intern":
+                            st.markdown(f"**{title}**")
+                        else:
+                            st.markdown(f"**Software Professional / Intern**")
+                        # Company — only show when actually extracted from the resume
+                        comp = work.get("company", "")
+                        if comp and comp not in ("Company / Organization", "Organization / Company", ""):
+                            st.markdown(f"🏢 **{comp}**")
+                        # Dates
                         if work.get("dates") and work["dates"] != "Dates Not Specified":
-                            st.caption(f"🗓️ **Duration:** {work['dates']}")
+                            st.caption(f"🗓️ {work['dates']}")
+                        # Bullet points
                         for b in work.get("bullets", []):
                             st.markdown(f"- <small>{b}</small>", unsafe_allow_html=True)
                         st.markdown("")
@@ -385,10 +391,13 @@ with tab2:
             if profile.projects:
                 for proj in profile.projects:
                     with st.container():
-                        st.markdown(f"• **{proj['name']}**")
-                        if proj.get('tech_stack'):
-                            st.caption(f"🛠️ **Tech Stack:** {proj['tech_stack']}")
-                        for b in proj.get('bullets', []):
+                        # Project name only — extracted directly from resume
+                        pname = proj.get("name", "")
+                        if pname:
+                            st.markdown(f"**🔹 {pname}**")
+                        if proj.get("tech_stack"):
+                            st.caption(f"🛠️ {proj['tech_stack']}")
+                        for b in proj.get("bullets", []):
                             st.markdown(f"- <small>{b}</small>", unsafe_allow_html=True)
                         st.markdown("")
             else:

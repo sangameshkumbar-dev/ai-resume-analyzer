@@ -1,4 +1,4 @@
-"""
+﻿"""
 Work Experience and Project Experience Extraction Engine.
 Robustly identifies jobs, internships, research roles, date periods,
 achievement bullet points, and project portfolios across diverse resume formats.
@@ -161,14 +161,14 @@ class ExperienceExtractor:
         return exp_lines, proj_lines
 
     def _clean_company_name(self, comp: str) -> str:
-        """Clean extracted organization or company name."""
+        """Clean extracted organization or company name. Returns empty string if none found."""
         if not comp:
-            return "Company / Organization"
+            return ""
         comp = re.sub(r'^\s*(?:Company(?:\s*Name)?|Organization|Employer|Firm|At)\s*[:\-–\s]*', '', comp, flags=re.I)
         comp = re.sub(r'^\s*\d+[\.\)]\s*', '', comp)
         comp = re.sub(r'^[•\-\*\>]\s*', '', comp)
         comp = comp.strip('*_#•-–—:[]()| ')
-        return comp or "Company / Organization"
+        return comp  # empty string means unknown; UI skips rendering
 
     def _clean_role_name(self, role: str) -> str:
         """Clean extracted position or internship title."""
@@ -216,7 +216,7 @@ class ExperienceExtractor:
                 start_new = True
             elif num_m:
                 start_new = True
-            elif (comp_m or role_m or has_role) and (curr.get('raw_bullets') or (curr.get('title') != 'Software Professional / Intern' and curr.get('company') != 'Company / Organization')):
+            elif (comp_m or role_m or has_role) and (curr.get('raw_bullets') or (curr.get('title') != 'Software Professional / Intern' and not curr.get('company'))):
                 start_new = True
 
             if start_new:
@@ -226,7 +226,7 @@ class ExperienceExtractor:
 
                 curr = {
                     'title': 'Software Professional / Intern',
-                    'company': 'Company / Organization',
+                    'company': '',
                     'dates': 'Dates Not Specified',
                     'raw_bullets': []
                 }
@@ -249,7 +249,7 @@ class ExperienceExtractor:
                 if ' at ' in clean_no_date or ' @ ' in clean_no_date:
                     parts = re.split(r'\s+(?:at|@)\s+', clean_no_date, flags=re.I)
                     curr['title'] = self._clean_role_name(parts[0])
-                    if len(parts) > 1 and curr['company'] == 'Company / Organization':
+                    if len(parts) > 1 and not curr.get('company'):
                         curr['company'] = self._clean_company_name(parts[1])
                 elif '|' in clean_no_date or ' - ' in clean_no_date or ' – ' in clean_no_date or ',' in clean_no_date or ' -- ' in clean_no_date:
                     parts = re.split(r'\s*\|\s*|\s+[-–—]\s+|\s*--\s*|\s*,\s*', clean_no_date)
@@ -257,11 +257,11 @@ class ExperienceExtractor:
                         p_s = part.strip()
                         if any(re.search(rf'\b{p}\b', p_s, re.I) for p in ROLE_PATTERNS):
                             curr['title'] = self._clean_role_name(p_s)
-                        elif len(p_s) >= 2 and curr['company'] == 'Company / Organization':
+                        elif len(p_s) >= 2 and not curr.get('company'):
                             curr['company'] = self._clean_company_name(p_s)
                 elif has_role:
                     curr['title'] = self._clean_role_name(clean_no_date)
-                elif curr['company'] == 'Company / Organization' and 2 <= len(clean_no_date) <= 60 and not clean_no_date.endswith('.'):
+                elif not curr.get('company') and 2 <= len(clean_no_date) <= 60 and not clean_no_date.endswith('.'):
                     curr['company'] = self._clean_company_name(clean_no_date)
 
         if curr:
@@ -408,11 +408,30 @@ class ExperienceExtractor:
             line_clean = line.strip()
             if any(re.search(rf'\b{p}\b', line_clean, re.I) for p in ROLE_PATTERNS):
                 d_m = DATE_REGEX.search(line_clean)
-                clean_title = DATE_REGEX.sub('', line_clean).strip(' |–-,')
-                if 4 <= len(clean_title) <= 60 and not line_clean.startswith(('•', '-', '*')):
+                # Strip date from the line to get the role + company part
+                clean_no_date = DATE_REGEX.sub('', line_clean).strip(' |–-,')
+                if 4 <= len(clean_no_date) <= 80 and not line_clean.startswith(('•', '-', '*')):
+                    # Try to split "Role | Company" or "Role at Company"
+                    company = ""
+                    title = clean_no_date
+                    if ' at ' in clean_no_date or ' @ ' in clean_no_date:
+                        parts = re.split(r'\s+(?:at|@)\s+', clean_no_date, flags=re.I)
+                        title = self._clean_role_name(parts[0])
+                        if len(parts) > 1:
+                            company = self._clean_company_name(parts[1])
+                    elif '|' in clean_no_date or ' – ' in clean_no_date or ' - ' in clean_no_date:
+                        parts = re.split(r'\s*\|\s*|\s+[-–—]\s+', clean_no_date)
+                        for part in parts:
+                            p_s = part.strip()
+                            if any(re.search(rf'\b{p}\b', p_s, re.I) for p in ROLE_PATTERNS):
+                                title = self._clean_role_name(p_s)
+                            elif len(p_s) >= 2 and not company:
+                                company = self._clean_company_name(p_s)
+                    else:
+                        title = self._clean_role_name(clean_no_date)
                     entries.append({
-                        "title": clean_title,
-                        "company": "Organization / Company",
+                        "title": title,
+                        "company": company,  # empty string means unknown — UI will skip rendering it
                         "dates": d_m.group(0) if d_m else "Dates Not Specified",
                         "bullets": []
                     })
