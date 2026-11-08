@@ -43,7 +43,9 @@ MAJOR_PATTERNS = [
 ]
 
 INSTITUTION_KEYWORDS = [
-    r'[A-Z][A-Za-z\s,\.]+(?:University|College|Institute of Technology|Polytechnic|Academy|School of [A-Za-z]+)'
+    r'\b(?:University|College|Institute|Academy)\s+of\s+[A-Z][A-Za-z\s]{2,35}',
+    r'\b[A-Z][A-Za-z\s]{1,35}\s+(?:University|College|Institute(?:\s+of\s+Technology)?|Polytechnic|Academy|School)',
+    r'\b(?:MIT|Stanford|Harvard|Caltech|Berkeley|CMU|Georgia Tech|IIT(?:\s+[A-Z][A-Za-z]+)?|BITS(?:\s+Pilani)?)\b'
 ]
 
 
@@ -151,11 +153,13 @@ class EducationExtractor:
         return text[start:start + 1200]
 
     def _find_institution(self, block: str) -> Optional[str]:
-        for inst_pat in INSTITUTION_KEYWORDS:
-            m = re.search(inst_pat, block)
-            if m:
-                inst_str = m.group(0).strip(" ,.-")
-                # Filter out absurdly long fragments
-                if len(inst_str) <= 80:
-                    return inst_str
+        for line in block.splitlines():
+            l = line.strip()
+            for inst_pat in INSTITUTION_KEYWORDS:
+                m = re.search(inst_pat, l)
+                if m:
+                    inst_str = m.group(0).strip(" ,.-")
+                    inst_str = re.split(r'\s+[-–—|]\s+', inst_str)[0].strip()
+                    if 3 <= len(inst_str) <= 60:
+                        return inst_str
         return None

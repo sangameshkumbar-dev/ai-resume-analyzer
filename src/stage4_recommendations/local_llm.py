@@ -133,15 +133,73 @@ class LocalLLMClient:
             logger.warning(f"Hugging Face Transformers call failed: {e}")
         return None
 
+    @staticmethod
+    def _enhance_single_bullet(orig: str) -> str:
+        """Dynamically elevate a candidate's actual bullet using Google XYZ formula."""
+        import re
+        cleaned = re.sub(r'^[•\-\*\>]\s*', '', orig).strip(' "\'')
+        if not cleaned:
+            return "Spearheaded core system architectural optimizations, enhancing delivery velocity by 25%."
+
+        # Detect existing metrics (percentages, multipliers, dollar values, scale counts)
+        metric_pattern = re.compile(
+            r'(?:\b\d+(?:\.\d+)?%|\b\d+x\b|\$\d+[\d,]*|\b\d+\+?\s*(?:k|m|users|requests|ms|sec|days|weeks|engineers|microservices|services)\b)',
+            re.I
+        )
+        has_metric = bool(metric_pattern.search(cleaned))
+
+        # Replace weak or passive opening phrases with proactive action verbs
+        passive_map = [
+            (r'^(?:responsible for|tasked with|assigned to)\s+(?:writing|building|developing|creating)\s+', 'Engineered and scaled '),
+            (r'^(?:responsible for|tasked with|assigned to)\s+(?:maintaining|managing|supporting)\s+', 'Architected and maintained '),
+            (r'^(?:responsible for|tasked with|assigned to)\s+', 'Spearheaded '),
+            (r'^(?:designed|developed|built)\s+and\s+led\s+', 'Spearheaded and led '),
+            (r'^(?:worked with|collaborated with)\s+(?:the\s+)?team to\s+', 'Collaborated across cross-functional teams to '),
+            (r'^(?:worked on|helped with|assisted in)\s+', 'Contributed to the design and implementation of '),
+            (r'^(?:wrote|created)\s+', 'Engineered and deployed '),
+            (r'^(?:developed)\s+', 'Spearheaded development of '),
+            (r'^(?:designed)\s+', 'Architected and implemented '),
+            (r'^(?:integrated)\s+', 'Engineered and integrated '),
+            (r'^(?:optimized)\s+', 'Benchmarked and optimized '),
+            (r'^(?:mentored)\s+', 'Mentored and guided ')
+        ]
+
+        transformed = cleaned
+        for pat, rep in passive_map:
+            if re.search(pat, transformed, re.I):
+                transformed = re.sub(pat, rep, transformed, flags=re.I, count=1)
+                break
+
+        # Only inject an outcome metric if the bullet currently lacks quantifiable metrics
+        if not has_metric:
+            t_lower = transformed.lower()
+            if any(w in t_lower for w in ['test', 'pytest', 'qa', 'bug', 'quality']):
+                transformed = f"{transformed.rstrip('.')}, elevating automated test coverage by 35% and minimizing production regressions"
+            elif any(w in t_lower for w in ['cloud', 'aws', 'docker', 'ci/cd', 'deploy', 'pipeline', 'terraform', 'ecs', 'k8s']):
+                transformed = f"{transformed.rstrip('.')}, reducing deployment turnaround by 40% and ensuring reproducible environments"
+            elif any(w in t_lower for w in ['database', 'sql', 'query', 'postgres', 'redis', 'cache', 'db']):
+                transformed = f"{transformed.rstrip('.')}, cutting average query latency by 30% under heavy traffic"
+            elif any(w in t_lower for w in ['frontend', 'react', 'ui', 'user', 'portal', 'next.js', 'css']):
+                transformed = f"{transformed.rstrip('.')}, accelerating page load responsiveness by 35% and elevating user engagement"
+            else:
+                transformed = f"{transformed.rstrip('.')}, boosting system throughput by 25% and improving team delivery velocity"
+
+        if not transformed.endswith('.'):
+            transformed += '.'
+
+        return transformed[0].upper() + transformed[1:]
+
     def _generate_heuristic_response(self, prompt: str) -> str:
         """Rule-based local fallback returning actionable suggestions if LLM daemon is offline."""
+        import re
         if "REWRITE" in prompt.upper() or "BULLET" in prompt.upper():
+            m = re.search(r'Original Bullet:\s*["\']?(.*?)["\']?\s*(?:\n|Output|$)', prompt, re.DOTALL | re.IGNORECASE)
+            orig = m.group(1).strip() if m else ""
+            if orig:
+                return self._enhance_single_bullet(orig)
             return (
-                "Actionable Enhancement (STAR Framework):\n"
-                "• Redesigned and refactored core backend architecture using best-practice design patterns, "
-                "improving system throughput by 30% and cutting latency across active services.\n"
-                "• Implemented end-to-end automated testing and CI/CD pipelines, reducing production regression bugs "
-                "and accelerating deployment velocity by 2x."
+                "Spearheaded implementation of scalable backend architecture and services, "
+                "improving system throughput by 30% and cutting latency across active deployments."
             )
         elif "SUMMARY" in prompt.upper():
             return (

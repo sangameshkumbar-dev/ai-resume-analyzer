@@ -112,12 +112,12 @@ class ResumeParser:
     def _extract_summary(self, text: str) -> str:
         """Extract professional summary or objective statement if present."""
         match = re.search(
-            r'^(?:SUMMARY|PROFESSIONAL SUMMARY|EXECUTIVE SUMMARY|OBJECTIVE|ABOUT ME)\b(.*?)(?=\n[A-Z\s]{4,}|\Z)',
+            r'^[#*_\s]*(?:SUMMARY|PROFESSIONAL SUMMARY|EXECUTIVE SUMMARY|OBJECTIVE|ABOUT ME)\s*[:\-–]?\s*\n?(.*?)(?=\n[#*_\s]*(?:TECHNICAL SKILLS|SKILLS|EXPERIENCE|WORK EXPERIENCE|PROFESSIONAL EXPERIENCE|EDUCATION|PROJECTS|CERTIFICATIONS)\b|\Z)',
             text, re.IGNORECASE | re.MULTILINE | re.DOTALL
         )
         if match:
             raw_summary = match.group(1).strip()
-            # Return first 300 chars
-            return " ".join(raw_summary.split()[:50])
+            # Clean up and normalize spacing
+            return " ".join(raw_summary.split())
         return ""
 

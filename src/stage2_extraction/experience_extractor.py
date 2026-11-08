@@ -320,8 +320,15 @@ class ExperienceExtractor:
                     curr['raw_bullets'].append(line_clean)
                 continue
 
-            # Never a project title if it is a tech/tools/metadata label
-            if TECH_OR_METADATA_REGEX.match(raw) or self._is_pure_tech_line(raw):
+            # Check if delimited title (e.g., "Search Engine | Python, React")
+            has_delim = bool(re.search(r'\s*\|\s*|\s+[-–—]\s+|\s*--\s*', raw))
+            m_paren = re.search(r'^(.*?)\s*\(([A-Za-z0-9\s,./#+-]+)\)$', raw)
+            num_m = re.match(r'^\s*(?:\d+[\.\)]|Project\s+\d+[:\-–]?|Project\s*:\s*)(.+)', line_clean, re.I)
+            label_m = re.match(r'^(?:Project(?:\s*(?:Name|Title))?|Title)\s*[:\-–]\s*(.+)', line_clean, re.I)
+            is_bullet_col = line_clean.startswith(('•', '-', '*', '>', '–')) and ':' in raw
+
+            # Never a project title if it is a standalone tech/tools/metadata label without a project title
+            if not (has_delim or m_paren or num_m or label_m) and (TECH_OR_METADATA_REGEX.match(raw) or self._is_pure_tech_line(raw)):
                 if curr:
                     tech_val = TECH_OR_METADATA_REGEX.sub('', raw).strip(' :–-')
                     if tech_val:
@@ -338,17 +345,7 @@ class ExperienceExtractor:
 
             is_title = False
             raw_title = ''
-
-            # 1. Numbered Project: "1. AI Resume Analyzer", "Project 1: ..."
-            num_m = re.match(r'^\s*(?:\d+[\.\)]|Project\s*\d*[:\-–]?)\s*(.+)', line_clean, re.I)
-            # 2. Explicit Label: "Project Title: ...", "Title: ..."
-            label_m = re.match(r'^(?:Project(?:\s*(?:Name|Title))?|Title)\s*[:\-–]\s*(.+)', line_clean, re.I)
-            # 3. Delimited Title: "Name | Python, React" or "Name - Python"
-            has_delim = bool(re.search(r'\s*\|\s*|\s+[-–—]\s+|\s*--\s*', raw))
-            # 4. Parenthetical Tech: "Name (Python, React)"
-            m_paren = re.search(r'^(.*?)\s*\(([A-Za-z0-9\s,./#+-]+)\)$', raw)
-            # 5. Bullet with colon title: "• Project Name: Description"
-            is_bullet_col = line_clean.startswith(('•', '-', '*', '>', '–')) and ':' in raw
+            extracted_tech = ''
 
             if num_m:
                 is_title = True
@@ -361,9 +358,12 @@ class ExperienceExtractor:
                 if parts and 3 <= len(parts[0]) <= 70 and parts[0].split()[0].lower() not in ACTION_VERBS:
                     is_title = True
                     raw_title = parts[0].strip()
+                    if len(parts) > 1:
+                        extracted_tech = " | ".join(parts[1:]).strip()
             elif m_paren and len(raw) <= 85:
                 is_title = True
                 raw_title = m_paren.group(1).strip()
+                extracted_tech = m_paren.group(2).strip()
             elif is_bullet_col:
                 col_parts = raw.split(':', 1)
                 if 3 <= len(col_parts[0].strip()) <= 55 and col_parts[0].split()[0].lower() not in ACTION_VERBS:
@@ -387,7 +387,7 @@ class ExperienceExtractor:
 
                     curr = {
                         'name': clean_name,
-                        'tech_stack': '',
+                        'tech_stack': extracted_tech,
                         'raw_bullets': [],
                         'bullets': []
                     }
@@ -421,13 +421,18 @@ class ExperienceExtractor:
     def _fallback_project_scan(self, text: str) -> List[Dict[str, Any]]:
         """Fallback to scan for project indicators across entire text."""
         projects = []
+        seen = set()
         for line in text.splitlines():
             line_clean = line.strip()
-            num_match = re.match(r'^\s*(?:\d+[\.\)]|Project\s*\d*[:\-–]?)\s*(.+)', line_clean, re.I)
-            if num_match and len(num_match.group(1)) <= 70:
-                projects.append({
-                    "name": num_match.group(1).strip('•-*#: '),
-                    "tech_stack": "",
-                    "bullets": []
-                })
+            num_match = re.match(r'^\s*(?:\d+[\.\)]|Project\s+\d+[:\-–]?|Project\s*:\s*)(.+)', line_clean, re.I)
+            if num_match:
+                name = num_match.group(1).strip('•-*#: ')
+                if 3 <= len(name) <= 70 and name.lower() not in seen:
+                    if not any(name.upper().startswith(h) for h in ["PROJECTS", "EXPERIENCE", "EDUCATION", "SKILLS"]):
+                        seen.add(name.lower())
+                        projects.append({
+                            "name": name,
+                            "tech_stack": "",
+                            "bullets": []
+                        })
         return projects[:4]

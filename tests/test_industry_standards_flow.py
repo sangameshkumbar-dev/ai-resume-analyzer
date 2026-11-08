@@ -62,6 +62,12 @@ def test_e2e_fullstack_pipeline():
     assert profile.name == "Alex Mercer"
     assert profile.total_years_exp >= 7.0
     assert "Bachelor" in profile.highest_degree
+    assert profile.education[0]["institution"] == "University of Washington"
+    assert "Full Stack Software Engineer" in profile.summary
+    assert len(profile.projects) >= 1
+    assert profile.projects[0]["name"] == "Enterprise Document Search Engine"
+    assert "FastAPI" in profile.projects[0]["tech_stack"]
+    assert len(profile.projects[0]["bullets"]) >= 1
     assert len(profile.all_skills_list) >= 15
     assert "Python" in profile.all_skills_list
     assert "FastAPI" in profile.all_skills_list
@@ -83,7 +89,10 @@ def test_e2e_fullstack_pipeline():
     recommender = ResumeRecommender(LocalLLMClient(provider="fallback"))
     recs = recommender.generate_recommendations(profile, jd_reqs, score_breakdown)
     assert len(recs["missing_skills_strategy"]) >= 1
-    assert len(recs["bullet_enhancements"]) >= 1
+    assert len(recs["bullet_enhancements"]) >= 2
+    # Verify no repeated/duplicate bullet rewrites
+    enhanced_bullets = [b["improved"] for b in recs["bullet_enhancements"]]
+    assert len(enhanced_bullets) == len(set(enhanced_bullets)), "Bullet enhancements must be uniquely tailored, no repeated templates"
     assert recs["ats_audit"]["ats_compatibility_score"] >= 60
 
     report_md = ReportGenerator.generate_markdown_report(profile, jd_reqs, score_breakdown, recs)
@@ -106,6 +115,11 @@ def test_e2e_data_scientist_pipeline():
     profile = parser.parse(doc)
     assert "Elena" in profile.name or "Rostova" in profile.name
     assert "Master" in profile.highest_degree
+    assert profile.education[0]["institution"] == "Columbia University"
+    assert "Machine Learning Engineer" in profile.summary
+    assert len(profile.projects) >= 1
+    assert profile.projects[0]["name"] == "Semantic Code Search Engine"
+    assert "PyTorch" in profile.projects[0]["tech_stack"]
     assert any(s in profile.all_skills_list for s in ["PyTorch", "TensorFlow", "Machine Learning"])
 
     jd_parser = JobDescriptionParser()
