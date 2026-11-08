@@ -46,7 +46,7 @@ class PDFResumeExtractor:
             # 2. Fallback Engine: pypdf
             pages_text = []
             try:
-                reader = PdfReader(io.BytesIO(file_bytes))
+                reader = PdfReader(io.BytesIO(file_bytes), strict=False)
                 metadata = reader.metadata or {}
                 for page in reader.pages:
                     pages_text.append(page.extract_text() or "")

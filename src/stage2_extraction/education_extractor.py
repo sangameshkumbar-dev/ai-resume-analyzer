@@ -27,14 +27,19 @@ MAJOR_PATTERNS = [
     r'Information Technology',
     r'Information Systems',
     r'Electrical Engineering',
+    r'Electronics(?: and Communication)?(?: Engineering)?',
     r'Computer Engineering',
     r'Mathematics(?: and Statistics)?',
     r'Statistics',
     r'Physics',
     r'Mechanical Engineering',
+    r'Civil Engineering',
+    r'Chemical Engineering',
     r'Business Administration',
     r'Finance',
-    r'Cybersecurity'
+    r'Economics',
+    r'Cybersecurity',
+    r'Bioinformatics'
 ]
 
 INSTITUTION_KEYWORDS = [
@@ -85,6 +90,14 @@ class EducationExtractor:
                         if m_match:
                             major = m_match.group(1).title()
                             break
+
+                # If still not matched, check for "in <Major Name>" pattern
+                if not major:
+                    in_match = re.search(r'\bin\s+([A-Za-z\s&]{3,40})(?:,|\.|\n|$)', line, re.IGNORECASE)
+                    if in_match:
+                        cand_major = in_match.group(1).strip()
+                        if not any(k in cand_major.lower() for k in ["university", "college", "gpa", "20", "19"]):
+                            major = cand_major.title()
 
                 # Extract Year
                 year_match = re.search(r'\b(19\d{2}|20\d{2})\b', context_block)

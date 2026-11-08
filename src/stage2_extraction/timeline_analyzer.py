@@ -24,13 +24,13 @@ MONTH_MAP = {
 
 # Regex to detect date ranges
 MONTH_REGEX = r'(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)'
-YEAR_REGEX = r'(?:19[7-9]\d|20[0-2]\d)'
-PRESENT_REGEX = r'(?:Present|Current|Ongoing|Now|Till Date)'
+YEAR_REGEX = r'(?:19\d{2}|20\d{2})'
+PRESENT_REGEX = r'(?:Present|Current|Ongoing|Now|Till\s*Date)'
 
 DATE_RANGE_PATTERN = re.compile(
-    rf'({MONTH_REGEX}\s+{YEAR_REGEX}|\d{{1,2}}/\d{{4}}|{YEAR_REGEX})'
+    rf'({MONTH_REGEX}(?:,\s*|\s+){YEAR_REGEX}|\d{{1,2}}/\d{{4}}|{YEAR_REGEX})'
     rf'\s*(?:-|–|—|to)\s*'
-    rf'({MONTH_REGEX}\s+{YEAR_REGEX}|\d{{1,2}}/\d{{4}}|{YEAR_REGEX}|{PRESENT_REGEX})',
+    rf'({MONTH_REGEX}(?:,\s*|\s+){YEAR_REGEX}|\d{{1,2}}/\d{{4}}|{YEAR_REGEX}|{PRESENT_REGEX})',
     re.IGNORECASE
 )
 
@@ -47,8 +47,8 @@ class TimelineAnalyzer:
         if re.match(rf'^{PRESENT_REGEX}$', date_str, re.IGNORECASE):
             return self.reference_now
 
-        # Format: "Jan 2021" or "January 2021"
-        m = re.match(rf'^({MONTH_REGEX})\s+({YEAR_REGEX})$', date_str, re.IGNORECASE)
+        # Format: "Jan 2021" or "January 2021" or "Jan, 2021"
+        m = re.match(rf'^({MONTH_REGEX})(?:,\s*|\s+)({YEAR_REGEX})$', date_str, re.IGNORECASE)
         if m:
             month_str, year_str = m.group(1).lower(), m.group(2)
             month = MONTH_MAP.get(month_str, 1)
@@ -142,7 +142,7 @@ class TimelineAnalyzer:
 
         breakdown = []
         for start, end in merged_ranges:
-            span_months = int((end - start).days / 30.44)
+            span_months = max(1, round((end - start).days / 30.44))
             span_years = round((end - start).days / 365.25, 1)
             breakdown.append({
                 "start": start.strftime("%b %Y"),

@@ -66,7 +66,7 @@ class ResumeValidator:
         # 4. Deep PDF Structure & Extractability Inspection
         try:
             stream = io.BytesIO(file_bytes)
-            reader = PdfReader(stream)
+            reader = PdfReader(stream, strict=False)
             page_count = len(reader.pages)
 
             if reader.is_encrypted:

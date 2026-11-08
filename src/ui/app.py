@@ -332,15 +332,19 @@ with tab2:
         st.markdown(" • ".join(contact_items) if contact_items else "*No contact links detected*")
         st.markdown("---")
 
-        # Education & Highest Degree
-        st.markdown("#### 🎓 Education & Highest Degree")
-        st.metric(label="Highest Qualification", value=profile.highest_degree)
-        with st.expander("View Full Education Details"):
+        # Overview Metrics Bar
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Verified Experience", f"{profile.total_years_exp} Yrs", help=profile.timeline.get("confidence", "Calculated"))
+        m2.metric("Highest Degree", profile.highest_degree)
+        m3.metric("Technical Skills", f"{len(profile.all_skills_list)} Skills")
+        m4.metric("Roles & Projects", f"{len(profile.work_experience) + len(profile.projects)}")
+        st.markdown("---")
+
+        # Education Details
+        with st.expander("🎓 View Full Education Details", expanded=False):
             for edu in profile.education:
                 st.markdown(f"**{edu['degree']}** in *{edu['major']}*")
                 st.caption(f"🏛️ {edu.get('institution') or 'University'} | 🗓️ {edu.get('graduation_year') or 'Year not specified'} | GPA: {edu.get('gpa') or 'N/A'}")
-
-        st.markdown("---")
 
         # Skills Taxonomy Breakdown
         st.markdown(f"#### 🛠️ Skills & Technical Tools ({len(profile.all_skills_list)} Identified)")
@@ -380,7 +384,13 @@ with tab2:
             st.markdown(f"#### 🚀 Project Experience ({len(profile.projects)} Projects)")
             if profile.projects:
                 for proj in profile.projects:
-                    st.markdown(f"• **{proj['name']}**")
+                    with st.container():
+                        st.markdown(f"• **{proj['name']}**")
+                        if proj.get('tech_stack'):
+                            st.caption(f"🛠️ **Tech Stack:** {proj['tech_stack']}")
+                        for b in proj.get('bullets', []):
+                            st.markdown(f"- <small>{b}</small>", unsafe_allow_html=True)
+                        st.markdown("")
             else:
                 st.write("No distinct project blocks detected.")
 
@@ -412,21 +422,26 @@ with tab3:
         st.markdown("#### Job Matching Actions")
         match_clicked = st.button("⚡ Run Matching Analysis", type="primary", use_container_width=True)
 
-    if match_clicked and st.session_state.candidate_profile and st.session_state.jd_text.strip():
-        with st.spinner("Analyzing skill matrices and generating dense neural embeddings..."):
-            jd_reqs = get_jd_parser().parse(st.session_state.jd_text)
-            scoring_engine = get_scoring_engine()
-            score_res = scoring_engine.evaluate_match(st.session_state.candidate_profile, jd_reqs)
-            st.session_state.match_results = (jd_reqs, score_res)
+    if match_clicked:
+        if not st.session_state.candidate_profile:
+            st.warning("⚠️ Please upload and verify a resume in Stage 1 before running the matching engine.")
+        elif not st.session_state.jd_text.strip():
+            st.warning("⚠️ Please paste a Job Description before running the matching engine.")
+        else:
+            with st.spinner("Analyzing skill matrices and generating dense neural embeddings..."):
+                jd_reqs = get_jd_parser().parse(st.session_state.jd_text)
+                scoring_engine = get_scoring_engine()
+                score_res = scoring_engine.evaluate_match(st.session_state.candidate_profile, jd_reqs)
+                st.session_state.match_results = (jd_reqs, score_res)
 
-            # Auto-run Stage 4 recommendations as well
-            recommender = ResumeRecommender(llm_client)
-            recs = recommender.generate_recommendations(
-                st.session_state.candidate_profile,
-                jd_reqs,
-                score_res
-            )
-            st.session_state.recommendations = recs
+                # Auto-run Stage 4 recommendations as well
+                recommender = ResumeRecommender(llm_client)
+                recs = recommender.generate_recommendations(
+                    st.session_state.candidate_profile,
+                    jd_reqs,
+                    score_res
+                )
+                st.session_state.recommendations = recs
 
     if st.session_state.match_results:
         jd_reqs, score_res = st.session_state.match_results

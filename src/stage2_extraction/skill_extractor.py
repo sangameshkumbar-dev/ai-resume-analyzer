@@ -37,9 +37,22 @@ class SkillExtractor:
         sorted_terms = sorted(self.term_to_canonical.keys(), key=lambda x: len(x), reverse=True)
         self.compiled_rules = []
         for term in sorted_terms:
-            # Safe boundary check supporting punctuation like C++, C#, .NET, Node.js
             escaped = re.escape(term)
-            pattern = re.compile(rf'(?<![a-zA-Z0-9_]){escaped}(?![a-zA-Z0-9_])', re.IGNORECASE)
+            if term == "c":
+                # Must be capitalized 'C' and NOT followed by '+' or '#' to prevent false matches with C++ or C#
+                pattern = re.compile(r'(?<![a-zA-Z0-9_+#])C(?![a-zA-Z0-9_+#])')
+            elif term == "r":
+                # Must be capitalized 'R' and NOT part of R&D
+                pattern = re.compile(r'(?<![a-zA-Z0-9_&])R(?![a-zA-Z0-9_&/])')
+            elif term == "go":
+                # Must be capitalized 'Go' to prevent matching English verb 'go'
+                pattern = re.compile(r'\bGo\b')
+            elif term.endswith("++"):
+                pattern = re.compile(rf'(?<![a-zA-Z0-9_]){escaped}(?![a-zA-Z0-9_+])', re.IGNORECASE)
+            elif term.endswith("#"):
+                pattern = re.compile(rf'(?<![a-zA-Z0-9_]){escaped}(?![a-zA-Z0-9_#])', re.IGNORECASE)
+            else:
+                pattern = re.compile(rf'(?<![a-zA-Z0-9_]){escaped}(?![a-zA-Z0-9_])', re.IGNORECASE)
             self.compiled_rules.append((pattern, term))
 
     def extract_skills(self, text: str) -> Dict[str, Any]:
