@@ -1,4 +1,4 @@
-﻿"""
+"""
 Work Experience and Project Experience Extraction Engine.
 Robustly identifies jobs, internships, research roles, date periods,
 achievement bullet points, and project portfolios across diverse resume formats.
