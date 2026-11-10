@@ -191,29 +191,27 @@ if col_s2.button("ML Engineer Sample"):
 
 st.sidebar.markdown("---")
 st.sidebar.markdown(
-    "<small><b>Architecture:</b><br/>"
-    "• Stage 1: PDF Plumber + PyPDF validation<br/>"
-    "• Stage 2: Traditional NLP + Taxonomy extraction<br/>"
-    "• Stage 3: SentenceTransformers + Transparent Scoring<br/>"
-    "• Stage 4: Local Ollama / HF Recommendations<br/>"
-    "<i>Zero external LLM APIs (Corporate-safe).</i></small>",
+    "<small><b>3-Stage Architecture:</b><br/>"
+    "• <b>Stage 1:</b> Resume Upload, Text Extraction & Validation<br/>"
+    "• <b>Stage 2:</b> Resume Information Extraction (Skills, Edu, Exp, Projects, Certs, Years)<br/>"
+    "• <b>Stage 3:</b> Resume–Job Matching Engine (Skills, Semantic Sim, Overall Score, LLM Recs)<br/>"
+    "<i>Local Ollama & Hugging Face Transformers. No LangChain. 100% Corporate-safe.</i></small>",
     unsafe_allow_html=True
 )
 
 # --- MAIN DASHBOARD HEADER ---
 st.markdown('<div class="main-title">🎯 AI Resume Analyzer & Job Matcher</div>', unsafe_allow_html=True)
 st.markdown(
-    '<div class="subtitle">Multi-stage evaluation engine combining <b>Traditional NLP</b>, '
-    '<b>Local Semantic Embeddings</b>, and <b>Local LLM Feedback</b>.</div>',
+    '<div class="subtitle">3-Stage Evaluation Engine combining <b>Traditional NLP</b>, '
+    '<b>Dense Semantic Embeddings</b>, and <b>Local LLM Recommendations</b>.</div>',
     unsafe_allow_html=True
 )
 
-# 4 STAGES TABS
-tab1, tab2, tab3, tab4 = st.tabs([
-    "📥 1. Upload & Text Extraction",
-    "🧠 2. Information Extraction",
-    "⚖️ 3. Resume–Job Matching",
-    "🚀 4. Personalized Recommendations"
+# 3 STAGES TABS
+tab1, tab2, tab3 = st.tabs([
+    "📥 Stage 1: Resume Upload & Text Extraction",
+    "🧠 Stage 2: Resume Information Extraction",
+    "⚖️ Stage 3: Resume–Job Matching Engine"
 ])
 
 
@@ -221,8 +219,8 @@ tab1, tab2, tab3, tab4 = st.tabs([
 # STAGE 1: RESUME UPLOAD & TEXT EXTRACTION
 # ==========================================
 with tab1:
-    st.subheader("Stage 1: Resume Upload & Validation")
-    st.caption("Upload your resume in PDF format. The system inspects file integrity, extracts text, and displays it for verification.")
+    st.subheader("Stage 1: Resume Upload & Text Extraction")
+    st.caption("Upload your resume in PDF format. Validates file type, size, and usable text extraction before user verification.")
 
     uploaded_file = st.file_uploader(
         "Choose a PDF Resume",
@@ -305,7 +303,7 @@ with tab1:
 # ==========================================
 with tab2:
     st.subheader("Stage 2: Resume Information Extraction")
-    st.caption("Structured data extracted using NLP heuristics, entity patterns, date interval algebra, and technical taxonomies.")
+    st.caption("Extracts important candidate details: Skills & technical tools, education & qualifications, work experience & project experience, certifications, and verified years of experience.")
 
     profile: CandidateProfile = st.session_state.candidate_profile
 
@@ -416,7 +414,7 @@ with tab2:
 # ==========================================
 with tab3:
     st.subheader("Stage 3: Resume–Job Matching Engine")
-    st.caption("Multi-factor comparison: Hard technical skills match, contextual semantic similarity embeddings, and timeline verification.")
+    st.caption("Compares candidate profile against target job description: matches skills, identifies gaps, computes dense semantic similarity, generates an explainable overall score, and provides actionable LLM recommendations.")
 
     jd_input_col, action_col = st.columns([3, 1])
     with jd_input_col:
@@ -437,13 +435,13 @@ with tab3:
         elif not st.session_state.jd_text.strip():
             st.warning("⚠️ Please paste a Job Description before running the matching engine.")
         else:
-            with st.spinner("Analyzing skill matrices and generating dense neural embeddings..."):
+            with st.spinner("Analyzing skill matrices, computing semantic similarity embeddings, and generating local LLM recommendations..."):
                 jd_reqs = get_jd_parser().parse(st.session_state.jd_text)
                 scoring_engine = get_scoring_engine()
                 score_res = scoring_engine.evaluate_match(st.session_state.candidate_profile, jd_reqs)
                 st.session_state.match_results = (jd_reqs, score_res)
 
-                # Auto-run Stage 4 recommendations as well
+                # Generate Stage 3 Personalized Recommendations (Local Ollama / HF Transformers)
                 recommender = ResumeRecommender(llm_client)
                 recs = recommender.generate_recommendations(
                     st.session_state.candidate_profile,
@@ -480,6 +478,28 @@ with tab3:
 
         st.markdown("---")
 
+        # Semantic Similarity Analysis
+        st.markdown("#### 🧠 Semantic Similarity Analysis (Dense Neural Embeddings)")
+        sem = score_res.semantic_report
+        sim_score = sem.get("percentage", score_res.semantic_score)
+        sim_engine = sem.get("engine", "Dense Embeddings")
+        sim_conf = sem.get("confidence", "High")
+
+        sem_col1, sem_col2 = st.columns([1, 2])
+        with sem_col1:
+            st.metric("Contextual Semantic Match", f"{sim_score}%", help="Calculated using local SentenceTransformers cosine similarity between full resume profile and job requirements.")
+            st.caption(f"**Engine:** `{sim_engine}`")
+            st.caption(f"**Confidence:** `{sim_conf}`")
+        with sem_col2:
+            st.info(
+                f"**Semantic Alignment Interpretation:**\n\n"
+                f"The candidate's project descriptions, responsibilities, and professional trajectory share a "
+                f"**{sim_score}% contextual similarity** with the target role. "
+                f"This captures nuanced phrasing and conceptual overlap beyond simple exact keyword matches."
+            )
+
+        st.markdown("---")
+
         # Detailed Skill Alignment Matrix
         st.markdown("#### 🔍 Skill Alignment & Gap Analysis")
         rep = score_res.skill_report
@@ -508,7 +528,7 @@ with tab3:
             else:
                 st.success("🎉 All mandatory skills detected in resume!")
 
-            st.markdown(f"**⚪ Missing Preferred Skills ({len(rep.missing_preferred_skills)})**")
+            st.markdown(f"**⚪ Missing / Unverified Preferred Skills ({len(rep.missing_preferred_skills)})**")
             if rep.missing_preferred_skills:
                 pills = " ".join([f'<span class="skill-pill skill-missing">✗ {s}</span>' for s in rep.missing_preferred_skills])
                 st.markdown(pills, unsafe_allow_html=True)
@@ -523,84 +543,70 @@ with tab3:
         st.markdown("---")
 
         # Explainable Score Audit
-        st.markdown("#### 📋 Explainable Score Audit")
+        st.markdown("#### 📋 Explainable Score Breakdown & Audit")
         for exp in score_res.explanations:
             st.markdown(f"• {exp}")
+
+        # Personalized Recommendations (Local LLM)
+        if st.session_state.recommendations:
+            recs = st.session_state.recommendations
+            profile = st.session_state.candidate_profile
+
+            st.markdown("---")
+            st.markdown("### 🚀 Personalized AI Recommendations to Improve Resume")
+            st.caption("Actionable recommendations powered by local LLM (Ollama / Hugging Face Transformers) to close skill gaps, elevate bullet impact, and improve ATS compliance.")
+
+            # 1. Tailored Summary
+            st.markdown("#### ✍️ Tailored Executive Pitch (Customized for Target JD)")
+            st.markdown(f'<div class="metric-card"><i>"{recs["tailored_summary"]}"</i></div>', unsafe_allow_html=True)
+
+            # 2. Bullet Point Rewrites
+            st.markdown("#### 🌟 Google XYZ / STAR Bullet Point Rewrites")
+            st.caption("Transform passive job descriptions into measurable, outcome-focused achievements: Accomplished [X], measured by [Y], by doing [Z].")
+
+            for idx, b in enumerate(recs.get("bullet_enhancements", [])):
+                with st.container():
+                    st.markdown(f'<div class="rewrite-card">'
+                                f'<b>Original Bullet:</b> <i>"{b["original"]}"</i><br/><br/>'
+                                f'<b>⭐ Enhanced Version:</b> <span style="color:#0F766E; font-weight:600;">{b["improved"]}</span><br/>'
+                                f'<small style="color:#64748B;">Rationale: {b["critique"]}</small>'
+                                f'</div>', unsafe_allow_html=True)
+
+            # 3. Missing Skills Strategy
+            st.markdown("#### 🔑 Missing Skills Integration Strategy")
+            st.caption("Actionable guidance on how to integrate crucial missing keywords legitimately into your experience.")
+
+            for s_rec in recs.get("missing_skills_strategy", [])[:4]:
+                with st.expander(f"Skill: {s_rec['skill']} — {s_rec['importance']}"):
+                    st.markdown(f"**Strategy:** {s_rec['actionable_advice']}")
+                    st.markdown(f"**Recommended Bullet Pattern:** `{s_rec['example_bullet']}`")
+
+            # 4. ATS & Readability Audit
+            st.markdown("#### 🤖 ATS & Formatting Health Check")
+            ats = recs.get("ats_audit", {})
+            a1, a2, a3, a4 = st.columns(4)
+            a1.metric("ATS Health Score", f"{ats.get('ats_compatibility_score', 0)}/100")
+            a2.metric("Total Word Count", ats.get("word_count", 0))
+            a3.metric("Action Verbs Detected", ats.get("action_verb_count", 0))
+            a4.metric("Quantifiable Metrics", ats.get("metrics_detected_count", 0))
+
+            st.markdown("**Checklist Findings:**")
+            for chk in ats.get("checks", []):
+                st.markdown(f"• {chk}")
+
+            # 5. Export Report
+            st.markdown("#### 📥 Export Audit Report")
+            markdown_report = ReportGenerator.generate_markdown_report(profile, jd_reqs, score_res, recs)
+
+            st.download_button(
+                label="📄 Download Comprehensive Audit Report (.md)",
+                data=markdown_report,
+                file_name=f"resume_match_report_{profile.name.replace(' ', '_').lower()}.md",
+                mime="text/markdown"
+            )
 
     elif not st.session_state.candidate_profile:
         st.info("Please upload a resume in Stage 1 before running the matching engine.")
     else:
-        st.info("Paste a Job Description above and click 'Run Matching Analysis' to see match scores and skill alignments.")
-
-
-# ==========================================
-# STAGE 4: PERSONALIZED RECOMMENDATIONS
-# ==========================================
-with tab4:
-    st.subheader("Stage 4: Personalized Recommendations & Improvement")
-    st.caption("AI-powered gap remediation, high-impact bullet point rewrites (STAR/XYZ), ATS audit, and executive pitch generation.")
-
-    if st.session_state.recommendations and st.session_state.match_results:
-        recs = st.session_state.recommendations
-        jd_reqs, score_res = st.session_state.match_results
-        profile = st.session_state.candidate_profile
-
-        # 1. Tailored Summary
-        st.markdown("### ✍️ Tailored Executive Pitch (Customized for Target JD)")
-        st.markdown(f'<div class="metric-card"><i>"{recs["tailored_summary"]}"</i></div>', unsafe_allow_html=True)
-
-        st.markdown("---")
-
-        # 2. Bullet Point Rewrites
-        st.markdown("### 🚀 Google XYZ / STAR Bullet Point Rewrites")
-        st.caption("Transform passive job descriptions into measurable, outcome-focused achievements: Accomplished [X], measured by [Y], by doing [Z].")
-
-        for idx, b in enumerate(recs.get("bullet_enhancements", [])):
-            with st.container():
-                st.markdown(f'<div class="rewrite-card">'
-                            f'<b>Original Bullet:</b> <i>"{b["original"]}"</i><br/><br/>'
-                            f'<b>⭐ Enhanced Version:</b> <span style="color:#0F766E; font-weight:600;">{b["improved"]}</span><br/>'
-                            f'<small style="color:#64748B;">Rationale: {b["critique"]}</small>'
-                            f'</div>', unsafe_allow_html=True)
-
-        st.markdown("---")
-
-        # 3. Missing Skills Strategy
-        st.markdown("### 🔑 Missing Skills Integration Strategy")
-        st.caption("Actionable guidance on how to integrate crucial missing keywords legitimately into your experience.")
-
-        for s_rec in recs.get("missing_skills_strategy", [])[:4]:
-            with st.expander(f"Skill: {s_rec['skill']} — {s_rec['importance']}"):
-                st.markdown(f"**Strategy:** {s_rec['actionable_advice']}")
-                st.markdown(f"**Recommended Bullet Pattern:** `{s_rec['example_bullet']}`")
-
-        st.markdown("---")
-
-        # 4. ATS & Readability Audit
-        st.markdown("### 🤖 ATS & Formatting Health Check")
-        ats = recs.get("ats_audit", {})
-        a1, a2, a3, a4 = st.columns(4)
-        a1.metric("ATS Health Score", f"{ats.get('ats_compatibility_score', 0)}/100")
-        a2.metric("Total Word Count", ats.get("word_count", 0))
-        a3.metric("Action Verbs Detected", ats.get("action_verb_count", 0))
-        a4.metric("Quantifiable Metrics", ats.get("metrics_detected_count", 0))
-
-        st.markdown("**Checklist Findings:**")
-        for chk in ats.get("checks", []):
-            st.markdown(f"• {chk}")
-
-        st.markdown("---")
-
-        # 5. Export Report
-        st.markdown("### 📥 Export Audit Report")
-        markdown_report = ReportGenerator.generate_markdown_report(profile, jd_reqs, score_res, recs)
-
-        st.download_button(
-            label="📄 Download Comprehensive Audit Report (.md)",
-            data=markdown_report,
-            file_name=f"resume_match_report_{profile.name.replace(' ', '_').lower()}.md",
-            mime="text/markdown"
-        )
-    else:
-        st.info("Run the match analysis in Stage 3 to generate customized recommendations.")
+        st.info("Paste a Job Description above and click 'Run Matching Analysis' to see match scores, semantic similarity, skill alignments, and personalized recommendations.")
 

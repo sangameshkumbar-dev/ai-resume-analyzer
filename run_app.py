@@ -39,24 +39,28 @@ def run_cli_demo():
 
     # 1. Ingestion
     sample_pdf = SAMPLE_RESUMES_DIR / "resume_senior_fullstack.pdf"
-    print(f"\n[Stage 1] Ingesting & Validating PDF: {sample_pdf.name}")
+    print(f"\n[Stage 1] Resume Upload and Text Extraction: {sample_pdf.name}")
     extractor = PDFResumeExtractor()
     doc = extractor.extract_from_path(sample_pdf)
     print(f"  ✓ Validation: {doc.validation.quality_badge}")
     print(f"  ✓ Pages: {doc.validation.page_count} | Size: {doc.validation.file_size_kb} KB | Words: {doc.validation.word_count}")
 
     # 2. Information Extraction
-    print("\n[Stage 2] Extracting Candidate Profile (Traditional NLP & Taxonomy)...")
+    print("\n[Stage 2] Resume Information Extraction (Skills, Edu, Exp, Projects, Certs, Timeline)...")
     parser = ResumeParser()
     profile = parser.parse(doc)
     print(f"  ✓ Candidate Name: {profile.name}")
     print(f"  ✓ Verified Experience: {profile.total_years_exp} Years ({profile.timeline.get('confidence')})")
     print(f"  ✓ Highest Degree: {profile.highest_degree}")
     print(f"  ✓ Extracted Skills ({len(profile.all_skills_list)}): {', '.join(profile.all_skills_list[:8])}...")
+    print(f"  ✓ Work Roles ({len(profile.work_experience)}): {', '.join([w['title'] for w in profile.work_experience])}")
+    print(f"  ✓ Projects ({len(profile.projects)}): {', '.join([p['name'] for p in profile.projects])}")
+    print(f"  ✓ Certifications ({len(profile.certifications)}): {', '.join([c['name'] for c in profile.certifications])}")
 
-    # 3. Matching Engine
+    # 3. Matching Engine & Recommendations
     sample_jd_path = SAMPLE_JOBS_DIR / "senior_fullstack_engineer.txt"
-    print(f"\n[Stage 3] Comparing Against Job Description: {sample_jd_path.name}...")
+    print(f"\n[Stage 3] Resume–Job Matching Engine & Personalized Recommendations...")
+    print(f"  Target JD: {sample_jd_path.name}")
     with open(sample_jd_path, "r", encoding="utf-8") as f:
         jd_text = f.read()
 
@@ -66,26 +70,30 @@ def run_cli_demo():
     score_res = scoring_engine.evaluate_match(profile, jd_reqs)
 
     print(f"\n  🎯 OVERALL MATCH SCORE: {score_res.overall_score}% ({score_res.tier})")
-    print(f"     - Technical Skills: {score_res.skills_score}% (Weight: 40% -> +{score_res.weighted_contributions['skills']} pts)")
-    print(f"     - Semantic Similarity: {score_res.semantic_score}% (Weight: 30% -> +{score_res.weighted_contributions['semantic']} pts)")
+    print(f"     - Technical Skills Match: {score_res.skills_score}% (Weight: 40% -> +{score_res.weighted_contributions['skills']} pts)")
+    print(f"     - Dense Semantic Similarity: {score_res.semantic_score}% (Weight: 30% -> +{score_res.weighted_contributions['semantic']} pts)")
     print(f"     - Experience Alignment: {score_res.experience_score}% (Weight: 20% -> +{score_res.weighted_contributions['experience']} pts)")
     print(f"     - Education Alignment: {score_res.education_score}% (Weight: 10% -> +{score_res.weighted_contributions['education']} pts)")
 
     print(f"\n  🔍 Matched Skills ({len(score_res.skill_report.all_matched)}): {', '.join(score_res.skill_report.all_matched)}")
     print(f"  ❌ Missing Required Skills: {', '.join(score_res.skill_report.missing_required_skills) or 'None'}")
+    print(f"  ⚠️ Missing Preferred Skills: {', '.join(score_res.skill_report.missing_preferred_skills) or 'None'}")
 
-    # 4. Recommendations
-    print("\n[Stage 4] Generating Local AI Recommendations & Enhancements...")
+    # Local LLM Recommendations
+    print("\n  🤖 Local LLM Recommendations (Ollama / Hugging Face Transformers):")
     llm_client = LocalLLMClient(provider="auto")
     recommender = ResumeRecommender(llm_client)
     recs = recommender.generate_recommendations(profile, jd_reqs, score_res)
 
-    print(f"\n  ✍️ Tailored Summary:\n     \"{recs['tailored_summary']}\"")
-    print(f"\n  ⭐ Sample Enhanced Bullet (Google XYZ Format):")
+    print(f"\n  ✍️ Tailored Summary Pitch:\n     \"{recs['tailored_summary']}\"")
+    print(f"\n  ⭐ Sample Enhanced Bullet (Google XYZ / STAR Format):")
     if recs["bullet_enhancements"]:
         enh = recs["bullet_enhancements"][0]
         print(f"     Original: {enh['original']}")
         print(f"     Improved: {enh['improved']}")
+
+    ats = recs.get("ats_audit", {})
+    print(f"\n  🤖 ATS Compatibility Score: {ats.get('ats_compatibility_score', 0)}/100")
 
     print("\n" + "="*70)
     print("✅ ANALYSIS COMPLETE! Launch with 'python run_app.py' to explore interactive UI.")
