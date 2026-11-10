@@ -33,26 +33,34 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for polished modern design
+# Custom CSS for polished modern design (Dark & Light theme adaptive)
 st.markdown("""
 <style>
     .main-title {
         font-size: 2.2rem;
         font-weight: 800;
-        color: #0F172A;
         margin-bottom: 0.2rem;
     }
     .subtitle {
-        color: #475569;
         font-size: 1.05rem;
         margin-bottom: 1.5rem;
+        opacity: 0.85;
     }
     .metric-card {
-        background: #F8FAFC;
-        border: 1px solid #E2E8F0;
+        background-color: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 8px;
-        padding: 14px 18px;
-        margin-bottom: 10px;
+        padding: 16px 20px;
+        margin-bottom: 12px;
+        line-height: 1.6;
+        font-size: 0.98rem;
+    }
+    @media (prefers-color-scheme: light) {
+        .metric-card {
+            background-color: #F8FAFC;
+            border-color: #E2E8F0;
+            color: #1E293B;
+        }
     }
     .skill-pill {
         display: inline-block;
@@ -63,32 +71,61 @@ st.markdown("""
         font-weight: 600;
     }
     .skill-matched {
-        background-color: #DCFCE7;
-        color: #166534;
-        border: 1px solid #86EFAC;
+        background-color: rgba(34, 197, 94, 0.15);
+        color: #4ADE80;
+        border: 1px solid rgba(34, 197, 94, 0.35);
     }
     .skill-missing {
-        background-color: #FEE2E2;
-        color: #991B1B;
-        border: 1px solid #FCA5A5;
+        background-color: rgba(239, 68, 68, 0.15);
+        color: #F87171;
+        border: 1px solid rgba(239, 68, 68, 0.35);
     }
     .skill-preferred {
-        background-color: #FEF3C7;
-        color: #92400E;
-        border: 1px solid #FCD34D;
+        background-color: rgba(245, 158, 11, 0.15);
+        color: #FBBF24;
+        border: 1px solid rgba(245, 158, 11, 0.35);
     }
     .skill-extra {
-        background-color: #E0E7FF;
-        color: #3730A3;
-        border: 1px solid #A5B4FC;
+        background-color: rgba(99, 102, 241, 0.15);
+        color: #A5B4FC;
+        border: 1px solid rgba(99, 102, 241, 0.35);
     }
     .rewrite-card {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
+        background-color: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.10);
         border-left: 4px solid #3B82F6;
-        border-radius: 6px;
-        padding: 12px 16px;
-        margin-bottom: 12px;
+        border-radius: 8px;
+        padding: 14px 18px;
+        margin-bottom: 14px;
+        line-height: 1.6;
+    }
+    @media (prefers-color-scheme: light) {
+        .rewrite-card {
+            background-color: #F8FAFC;
+            border-color: #E2E8F0;
+            border-left-color: #3B82F6;
+            color: #1E293B;
+        }
+    }
+    .rewrite-card .orig-label {
+        opacity: 0.7;
+        font-size: 0.92rem;
+        margin-bottom: 6px;
+    }
+    .rewrite-card .enh-text {
+        color: #38BDF8;
+        font-weight: 600;
+        font-size: 0.98rem;
+    }
+    @media (prefers-color-scheme: light) {
+        .rewrite-card .enh-text {
+            color: #0369A1;
+        }
+    }
+    .rewrite-card .critique-note {
+        opacity: 0.65;
+        font-size: 0.82rem;
+        margin-top: 8px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -567,9 +604,9 @@ with tab3:
             for idx, b in enumerate(recs.get("bullet_enhancements", [])):
                 with st.container():
                     st.markdown(f'<div class="rewrite-card">'
-                                f'<b>Original Bullet:</b> <i>"{b["original"]}"</i><br/><br/>'
-                                f'<b>⭐ Enhanced Version:</b> <span style="color:#0F766E; font-weight:600;">{b["improved"]}</span><br/>'
-                                f'<small style="color:#64748B;">Rationale: {b["critique"]}</small>'
+                                f'<div class="orig-label"><b>Original Bullet:</b> <i>"{b["original"]}"</i></div>'
+                                f'<div class="enh-text">⭐ {b["improved"]}</div>'
+                                f'<div class="critique-note"><b>Rationale:</b> {b["critique"]}</div>'
                                 f'</div>', unsafe_allow_html=True)
 
             # 3. Missing Skills Strategy
