@@ -34,7 +34,10 @@ class ResumeValidator:
         # 1. Filename extension check
         ext = Path(filename).suffix.lower()
         if ext not in ALLOWED_EXTENSIONS:
-            errors.append(f"Invalid file extension '{ext}'. Only PDF files are supported.")
+            errors.append(
+                f"Unsupported file format '{ext}'. Only PDF documents (.pdf) are allowed. "
+                f"Word (.doc, .docx), PowerPoint (.ppt, .pptx), and other formats are not accepted."
+            )
             is_valid = False
 
         # 2. File size checks
@@ -44,7 +47,7 @@ class ResumeValidator:
         elif file_size > MAX_FILE_SIZE_BYTES:
             errors.append(
                 f"File size ({round(file_size / (1024*1024), 2)} MB) exceeds the maximum allowed limit of "
-                f"{MAX_FILE_SIZE_BYTES // (1024*1024)} MB."
+                f"{MAX_FILE_SIZE_BYTES // (1024*1024)} MB. Please upload a PDF below 2 MB."
             )
             is_valid = False
 

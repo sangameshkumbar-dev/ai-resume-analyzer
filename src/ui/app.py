@@ -260,30 +260,39 @@ tab1, tab2, tab3 = st.tabs([
 # ==========================================
 with tab1:
     st.subheader("Stage 1: Resume Upload & Text Extraction")
-    st.caption("Upload your resume in PDF format. Validates file type, size, and usable text extraction before user verification.")
+    st.caption("Upload your resume in PDF format (PDF only, strictly below 2 MB). Validates file integrity, type, size, and usable text.")
 
     uploaded_file = st.file_uploader(
         "Choose a PDF Resume",
         type=["pdf"],
-        help="Upload a standard PDF resume (up to 10MB)"
+        help="Upload a PDF resume strictly below 2 MB. Word (.doc, .docx), PowerPoint (.ppt, .pptx), and other formats are not accepted."
     )
 
     if uploaded_file is not None:
         file_bytes = uploaded_file.getvalue()
-        file_id = f"upload_{uploaded_file.name}_{len(file_bytes)}"
-        # Check if a new or different resume has been uploaded
-        if st.session_state.get("active_resume_id") != file_id:
-            extractor = get_extractor()
-            extracted_doc = extractor.extract_from_bytes(file_bytes, filename=uploaded_file.name)
-            st.session_state.extracted_doc = extracted_doc
-            st.session_state.active_resume_id = file_id
-            if extracted_doc.validation and extracted_doc.validation.is_valid:
-                st.session_state.candidate_profile = get_parser().parse(extracted_doc)
-            else:
-                st.session_state.candidate_profile = None
-            # Invalidate downstream match results from the previous resume
-            st.session_state.match_results = None
-            st.session_state.recommendations = None
+        file_name = uploaded_file.name
+        file_size_mb = len(file_bytes) / (1024 * 1024)
+
+        # Immediate guards for file type and size
+        if not file_name.lower().endswith(".pdf"):
+            st.error("❌ Invalid file format! Only PDF documents (.pdf) are allowed. Word, PowerPoint, and other formats are strictly rejected.")
+        elif file_size_mb > 2.0:
+            st.error(f"❌ File size ({file_size_mb:.2f} MB) exceeds the 2 MB limit! Please upload a PDF below 2 MB.")
+        else:
+            file_id = f"upload_{file_name}_{len(file_bytes)}"
+            # Check if a new or different resume has been uploaded
+            if st.session_state.get("active_resume_id") != file_id:
+                extractor = get_extractor()
+                extracted_doc = extractor.extract_from_bytes(file_bytes, filename=file_name)
+                st.session_state.extracted_doc = extracted_doc
+                st.session_state.active_resume_id = file_id
+                if extracted_doc.validation and extracted_doc.validation.is_valid:
+                    st.session_state.candidate_profile = get_parser().parse(extracted_doc)
+                else:
+                    st.session_state.candidate_profile = None
+                # Invalidate downstream match results from the previous resume
+                st.session_state.match_results = None
+                st.session_state.recommendations = None
     elif (st.session_state.get("active_resume_id") or "").startswith("upload_"):
         # User cleared the uploaded file (clicked the 'x' in the uploader)
         st.session_state.extracted_doc = None

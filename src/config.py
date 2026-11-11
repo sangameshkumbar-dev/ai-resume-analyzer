@@ -12,9 +12,9 @@ SAMPLE_RESUMES_DIR = DATA_DIR / "sample_resumes"
 SAMPLE_JOBS_DIR = DATA_DIR / "sample_jobs"
 
 # Ingestion / Validation Constraints
-MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024  # 10 MB max resume size
+MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024   # 2 MB max resume size (Strict limit)
 MIN_FILE_SIZE_BYTES = 100               # 100 bytes min
-ALLOWED_EXTENSIONS = {".pdf"}
+ALLOWED_EXTENSIONS = {".pdf"}           # PDF only: no docx, ppt, txt, etc.
 MIN_EXTRACTED_CHAR_COUNT = 80          # Below this, flagged as potentially scanned/empty
 
 # Scoring Weights (Must sum to 1.0)

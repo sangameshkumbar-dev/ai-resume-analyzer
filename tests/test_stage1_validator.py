@@ -11,7 +11,18 @@ from src.config import SAMPLE_RESUMES_DIR
 def test_validator_rejects_non_pdf():
     val = ResumeValidator.validate_bytes(b"Hello world fake text", "resume.docx")
     assert not val.is_valid
-    assert any("Only PDF files are supported" in err for err in val.errors)
+    assert any("Only PDF documents" in err or "Only PDF files" in err for err in val.errors)
+
+    val_ppt = ResumeValidator.validate_bytes(b"Hello world fake text", "resume.pptx")
+    assert not val_ppt.is_valid
+    assert any("Only PDF documents" in err or "Only PDF files" in err for err in val_ppt.errors)
+
+
+def test_validator_rejects_files_over_2mb():
+    over_2mb = b"%PDF-1.4\n" + b"X" * (int(2.1 * 1024 * 1024))
+    val = ResumeValidator.validate_bytes(over_2mb, "heavy_resume.pdf")
+    assert not val.is_valid
+    assert any("exceeds the maximum allowed limit of 2 MB" in err for err in val.errors)
 
 
 def test_validator_rejects_empty_file():

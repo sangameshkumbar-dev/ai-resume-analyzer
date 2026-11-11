@@ -136,22 +136,32 @@ def test_e2e_data_scientist_pipeline():
 # 2. STAGE 1: INGESTION, VALIDATION & TEXT HELPER ROBUSTNESS
 # ==============================================================================
 def test_validator_file_size_and_type_guards():
-    # 1. Non-PDF extension
+    # 1. Non-PDF extension (Word, PPT, etc.)
     res = ResumeValidator.validate_bytes(b"%PDF-1.4 Fake", "document.docx")
     assert not res.is_valid
-    assert any("Only PDF files are supported" in e for e in res.errors)
+    assert any("Only PDF documents" in e or "Only PDF files" in e for e in res.errors)
+
+    res_ppt = ResumeValidator.validate_bytes(b"%PDF-1.4 Fake", "presentation.pptx")
+    assert not res_ppt.is_valid
+    assert any("Only PDF documents" in e or "Only PDF files" in e for e in res_ppt.errors)
 
     # 2. Too small
     res = ResumeValidator.validate_bytes(b"%PDF-1.4", "short.pdf")
     assert not res.is_valid
     assert any("too small" in e for e in res.errors)
 
-    # 3. Missing magic byte
+    # 3. Exceeds 2 MB limit
+    over_2mb = b"%PDF-1.4\n" + b"A" * (int(2.1 * 1024 * 1024))
+    res_large = ResumeValidator.validate_bytes(over_2mb, "large_resume.pdf")
+    assert not res_large.is_valid
+    assert any("exceeds the maximum allowed limit of 2 MB" in e for e in res_large.errors)
+
+    # 4. Missing magic byte
     res = ResumeValidator.validate_bytes(b"INVALID_HEADER" + b" " * 150, "fake.pdf")
     assert not res.is_valid
     assert any("missing %PDF-" in e for e in res.errors)
 
-    # 4. Non-existent file path
+    # 5. Non-existent file path
     res = ResumeValidator.validate_file_path("non_existent_resume_file_xyz.pdf")
     assert not res.is_valid
     assert any("does not exist" in e for e in res.errors)
