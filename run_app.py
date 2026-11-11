@@ -102,8 +102,22 @@ def run_cli_demo():
 
 def run_streamlit():
     import subprocess
+    import socket
+
     app_path = PROJECT_ROOT / "src" / "ui" / "app.py"
-    cmd = [sys.executable, "-m", "streamlit", "run", str(app_path)]
+
+    # Find the first free port starting from 8501 to avoid 'Port not available' errors
+    port = 8501
+    for p in range(8501, 8520):
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            if s.connect_ex(('127.0.0.1', p)) != 0:
+                port = p
+                break
+
+    cmd = [
+        sys.executable, "-m", "streamlit", "run", str(app_path),
+        "--server.port", str(port)
+    ]
     subprocess.run(cmd)
 
 
