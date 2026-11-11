@@ -50,8 +50,13 @@ def test_recommender_generates_suite():
     assert "ats_audit" in recs
     assert "tailored_summary" in recs
 
-    # Test report generator
+    # Test report generator (Markdown & PDF)
     report_md = ReportGenerator.generate_markdown_report(profile, jd_reqs, score_res, recs)
     assert "# 🎯 AI Resume & Job Match Audit Report" in report_md
     assert "Sam Sample" in report_md
+
+    report_pdf = ReportGenerator.generate_pdf_report(profile, jd_reqs, score_res, recs)
+    assert isinstance(report_pdf, bytes)
+    assert len(report_pdf) > 1000
+    assert report_pdf.startswith(b"%PDF")
 

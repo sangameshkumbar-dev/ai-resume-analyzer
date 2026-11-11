@@ -8,6 +8,7 @@ requests>=2.32.0
 # UI & Visualization
 streamlit>=1.39.0
 plotly>=5.24.0
+reportlab>=4.0.0
 
 # Local AI / Embeddings / NLP
 # (sentence-transformers installs torch and transformers from Hugging Face)

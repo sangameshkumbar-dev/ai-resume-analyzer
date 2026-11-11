@@ -633,13 +633,13 @@ with tab3:
 
             # 5. Export Report
             st.markdown("#### 📥 Export Audit Report")
-            markdown_report = ReportGenerator.generate_markdown_report(profile, jd_reqs, score_res, recs)
+            pdf_bytes = ReportGenerator.generate_pdf_report(profile, jd_reqs, score_res, recs)
 
             st.download_button(
-                label="📄 Download Comprehensive Audit Report (.md)",
-                data=markdown_report,
-                file_name=f"resume_match_report_{profile.name.replace(' ', '_').lower()}.md",
-                mime="text/markdown"
+                label="📄 Download Comprehensive Audit Report (.pdf)",
+                data=pdf_bytes,
+                file_name=f"resume_match_report_{profile.name.replace(' ', '_').lower()}.pdf",
+                mime="application/pdf"
             )
 
     elif not st.session_state.candidate_profile:
