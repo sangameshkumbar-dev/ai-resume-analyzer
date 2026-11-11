@@ -21,6 +21,9 @@ from src.stage3_matching.jd_parser import JobDescriptionParser
 from src.stage3_matching.scoring_engine import ScoringEngine
 from src.stage4_recommendations.local_llm import LocalLLMClient
 from src.stage4_recommendations.recommender import ResumeRecommender
+import importlib
+import src.stage4_recommendations.report_generator as report_gen_module
+importlib.reload(report_gen_module)
 from src.stage4_recommendations.report_generator import ReportGenerator
 from src.ui.components import render_match_gauge, render_radar_breakdown, render_score_bar_breakdown
 from src.config import SAMPLE_RESUMES_DIR, SAMPLE_JOBS_DIR
@@ -633,14 +636,27 @@ with tab3:
 
             # 5. Export Report
             st.markdown("#### 📥 Export Audit Report")
-            pdf_bytes = ReportGenerator.generate_pdf_report(profile, jd_reqs, score_res, recs)
+            try:
+                # Reload module if running under hot-reloading server
+                if not hasattr(ReportGenerator, "generate_pdf_report"):
+                    importlib.reload(report_gen_module)
+                pdf_bytes = ReportGenerator.generate_pdf_report(profile, jd_reqs, score_res, recs)
 
-            st.download_button(
-                label="📄 Download Comprehensive Audit Report (.pdf)",
-                data=pdf_bytes,
-                file_name=f"resume_match_report_{profile.name.replace(' ', '_').lower()}.pdf",
-                mime="application/pdf"
-            )
+                st.download_button(
+                    label="📄 Download Comprehensive Audit Report (.pdf)",
+                    data=pdf_bytes,
+                    file_name=f"resume_match_report_{profile.name.replace(' ', '_').lower()}.pdf",
+                    mime="application/pdf"
+                )
+            except Exception as e:
+                # Fallback to markdown report if any PDF generation error occurs
+                markdown_report = ReportGenerator.generate_markdown_report(profile, jd_reqs, score_res, recs)
+                st.download_button(
+                    label="📄 Download Audit Report (.md)",
+                    data=markdown_report,
+                    file_name=f"resume_match_report_{profile.name.replace(' ', '_').lower()}.md",
+                    mime="text/markdown"
+                )
 
     elif not st.session_state.candidate_profile:
         st.info("Please upload a resume in Stage 1 before running the matching engine.")
